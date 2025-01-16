@@ -5,18 +5,18 @@ let actuallyParse = true;
 /**
  * Globally disable parsing color tags.
  *
- * @see {@link resumeParsing}
+ * @see {@link resumeTagParsing}
  */
-export function stopParsing() {
+export function stopTagParsing() {
 	actuallyParse = false;
 }
 
 /**
  * Globally enable parsing color tags.
  *
- * @see {@link stopParsing}
+ * @see {@link stopTagParsing}
  */
-export function resumeParsing() {
+export function resumeTagParsing() {
 	actuallyParse = true;
 }
 
@@ -25,14 +25,14 @@ export function resumeParsing() {
  *
  * This will make the console.log, console.error, and console.warn functions automatically call `parse` on their arguments.
  */
-export function applyToConsole() {
+export function applyTagsToConsole() {
 	const oldConsole = {
 		log: console.log.bind(console),
 		error: console.error.bind(console),
 		warn: console.warn.bind(console),
 	};
 
-	console.log = (...args) => oldConsole.log(parse(args.join(" ")));
+	console.log = (...args) => oldConsole.log(parseTags(args.join(" ")));
 }
 
 /**
@@ -70,25 +70,25 @@ export function applyToConsole() {
  * @returns The resulting string
  *
  * @example
- * const parsed = parse("<b>Bold</b> Normal");
+ * const parsed = parseTags("<b>Bold</b> Normal");
  * assert.equal(parsed, chalk.bold("Bold") + " Normal");
  *
  * @example
  * // Add the `~` character to escape the tag
- * const parsed = parse("~<b>Not Bold~</b> Fine ~~<b>Bold~~</b> Normal");
+ * const parsed = parseTags("~<b>Not Bold~</b> Fine ~~<b>Bold~~</b> Normal");
  * assert.equal(parsed, "<b>Not Bold</b> Fine ~" + chalk.bold("Bold~") + " Normal");
  *
  * @example
  * // You can mix and match tags as much as you want. You can remove categories of tags as well, for example, removing `bg:bright:blue` by doing `</bg>`
- * const parsed = parse("<red bg:bright:blue bold>Test</bg> Hi</b> there</red> again");
+ * const parsed = parseTags("<red bg:bright:blue bold>Test</bg> Hi</b> there</red> again");
  * assert.equal(parsed, chalk.red.bgBlueBright.bold("Test") + chalk.red.bold(" Hi") + chalk.red(" there") + " again");
  *
  * @example
  * // Try to not use "</>" if you can help it. In this case, it is fine.
- * const parsed = parse("<fg:red italic bg:#0000FF>Test</> Another test");
+ * const parsed = parseTags("<fg:red italic bg:#0000FF>Test</> Another test");
  * assert.equal(parsed, chalk.red.italic.bgHex("#0000FF")("Test") + " Another test");
  */
-export function parse(text: string): string {
+export function parseTags(text: string): string {
 	if (!actuallyParse || !text.includes("<")) {
 		return text;
 	}
