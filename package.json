@@ -1,0 +1,26 @@
+{
+	"name": "chalk-tags",
+	"version": "1.0.0",
+	"description": "HTML-style color tags using Chalk",
+	"exports": "./index.ts",
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/LunarTides/chalk-tags.git"
+	},
+	"dependencies": {
+		"chalk": "^5.4.1"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"@types/bun": "^1.1.16",
+		"bun": "^1.1.43"
+	},
+	"keywords": ["ansi", "chalk", "cli", "color", "colors", "console"],
+	"author": "LunarTides",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/LunarTides/chalk-tags/issues"
+	},
+	"homepage": "https://github.com/LunarTides/chalk-tags#readme"
+}
