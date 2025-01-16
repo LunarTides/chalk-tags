@@ -1,2 +1,4 @@
+node_modules/
 .gitignore
 color.test.ts
+bun.lockb
