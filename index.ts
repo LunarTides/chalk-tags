@@ -3,7 +3,7 @@ import chalk, { type ChalkInstance } from "chalk";
 let actuallyParse = true;
 
 /**
- * Globally disable parsing color tags.
+ * Globally disable parsing chalk tags.
  *
  * @see {@link resumeTagParsing}
  */
@@ -12,7 +12,7 @@ export function stopTagParsing() {
 }
 
 /**
- * Globally enable parsing color tags.
+ * Globally enable parsing chalk tags.
  *
  * @see {@link stopTagParsing}
  */
@@ -21,7 +21,7 @@ export function resumeTagParsing() {
 }
 
 /**
- * Applies color tags to the console.
+ * Makes chalk tags automatically apply to the console functions.
  *
  * This will make the console.log, console.error, and console.warn functions automatically call `parse` on their arguments.
  */
@@ -33,10 +33,12 @@ export function applyTagsToConsole() {
 	};
 
 	console.log = (...args) => oldConsole.log(parseTags(args.join(" ")));
+	console.error = (...args) => oldConsole.error(parseTags(args.join(" ")));
+	console.warn = (...args) => oldConsole.warn(parseTags(args.join(" ")));
 }
 
 /**
- * Parses color tags in `text`.
+ * Parses chalk tags in `text`.
  *
  * @example
  * // You can combined these with each other
