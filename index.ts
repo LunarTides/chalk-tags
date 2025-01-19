@@ -148,8 +148,14 @@ function applyChalk(text: string, tags: string[]): string {
 			.replace("dark:", "");
 
 		// Handle special tags.
-		if (tag === "b") tag = "bold";
-		if (tag === "i") tag = "italic";
+		switch (tag) {
+			case "b":
+				tag = "bold";
+				break;
+			case "i":
+				tag = "italic";
+				break;
+		}
 
 		// Hex color support
 		if (tag.startsWith("#")) {
