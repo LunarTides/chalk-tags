@@ -105,6 +105,7 @@ export function parseTags(text: string): string {
 	let result = "";
 	let currentTags: string[] = [];
 
+	// PERF: This probably the slowest thing in the library. Maybe there is a better way to do this that doesn't use regex.
 	for (const match of text.matchAll(/(.*?)(<.*?>|$)/gs)) {
 		const [content, tagString] = handleEscape(match);
 
@@ -139,6 +140,7 @@ function applyChalk(text: string, tags: string[]): string {
 		const isBright = tag.includes("bright:");
 
 		// Clean up the tag.
+		// PERF: I'm not using regex here because it's faster.
 		tag = tag
 			.replace("fg:", "")
 			.replace("bg:", "")
@@ -170,7 +172,7 @@ function applyChalk(text: string, tags: string[]): string {
 function handleEscape(match: RegExpMatchArray): [string, string] {
 	let [_, content, tag] = match;
 
-	if (/(^~~|~~$)/g.test(content)) {
+	if (content.startsWith("~~") || content.endsWith("~~")) {
 		/*
 		 * Get rid of one of the escape characters.
 		 * This will make it so "~~<b>" -> "~<b>" instead of "~~<b>" -> "~~<b>",

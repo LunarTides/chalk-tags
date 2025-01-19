@@ -5,7 +5,8 @@
 	"exports": "./index.ts",
 	"type": "module",
 	"scripts": {
-		"benchmark": "bun benchmark.ts"
+		"benchmark": "bun benchmark.ts",
+		"format": "bunx biome check --fix"
 	},
 	"repository": {
 		"type": "git",
@@ -20,14 +21,7 @@
 		"bun": "^1.1.45",
 		"mitata": "^1.0.31"
 	},
-	"keywords": [
-		"ansi",
-		"chalk",
-		"cli",
-		"color",
-		"colors",
-		"console"
-	],
+	"keywords": ["ansi", "chalk", "cli", "color", "colors", "console"],
 	"author": "LunarTides",
 	"license": "MIT",
 	"bugs": {
