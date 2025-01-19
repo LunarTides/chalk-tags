@@ -50,6 +50,10 @@ describe("tags", () => {
 			`${chalk.bgHex("#0000FF").italic.red("Test")} Another test`,
 		);
 
+		expect(parseTags("<fg:red italic bg:#0000FF>Test</bg italic> Another test")).toEqual(
+			`${chalk.bgHex("#0000FF").italic.red("Test")}${chalk.red(" Another test")}`,
+		);
+
 		expect(parseTags("~<bold>Hi~</bold>")).toEqual("<bold>Hi</bold>");
 
 		expect(parseTags("<b>~<i>Bold tag~</i> Still bold</b>")).toEqual(

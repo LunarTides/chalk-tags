@@ -106,9 +106,13 @@ export function parseTags(text: string): string {
 		}
 
 		if (tagString?.startsWith("<")) {
+			let remove = false;
+
 			for (const tag of tagString.split(" ")) {
-				if (tag.startsWith("</")) {
-					const tagName = tag.slice(2, -1); // Remove "</" and ">"
+				if (remove || tag.startsWith("</")) {
+					remove = true;
+
+					const tagName = tag.replace("</", "").replace(">", ""); // Remove "</" and ">"
 					currentTags = currentTags.filter((t) => !t.startsWith(tagName));
 				} else {
 					currentTags.push(tag.replace("<", "").replace(">", "")); // Remove < and >
