@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import chalk from "chalk";
 import { parseTags, resumeTagParsing, stopTagParsing } from "./index.ts";
 
 describe("tags", () => {
@@ -6,37 +7,79 @@ describe("tags", () => {
 		expect(parseTags("No tags")).toEqual("No tags");
 
 		expect(parseTags("No tags 01 <red>Red tag</red> No tags 02")).toEqual(
-			"No tags 01 \x1b[31mRed tag\x1b[39m No tags 02",
+			`No tags 01 ${chalk.red("Red tag")} No tags 02`,
 		);
 
 		expect(
 			parseTags("<fg:red bg:dark:blue>Red & blue bg tag</bg> Red tag</fg>"),
 		).toEqual(
-			"\x1b[44m\x1b[31mRed & blue bg tag\x1b[39m\x1b[49m\x1b[31m Red tag\x1b[39m",
+			`${chalk.bgBlue.red("Red & blue bg tag")}${chalk.red(" Red tag")}`,
 		);
 
 		expect(parseTags("<b>Bold tag</b> No tags 02")).toEqual(
-			"\x1b[1mBold tag\x1b[22m No tags 02",
+			`${chalk.bold("Bold tag")} No tags 02`,
 		);
 
 		expect(parseTags("<i>Italic tag</i> No tags 02")).toEqual(
-			"\x1b[3mItalic tag\x1b[23m No tags 02",
-		);
-
-		expect(parseTags("<#123456 bg:bright:red>Green tag</> No tags")).toEqual(
-			"\x1b[41m\x1b[38;2;18;52;86mGreen tag\x1b[39m\x1b[49m No tags",
+			`${chalk.italic("Italic tag")} No tags 02`,
 		);
 
 		expect(
-			parseTags("<bg:#123456 fg:bright:red>Bg green tag</> No tags"),
+			parseTags(
+				"<#123456 bg:bright:red>Blue on bright red background</> No tags",
+			),
 		).toEqual(
-			"\x1b[31m\x1b[48;2;18;52;86mBg green tag\x1b[49m\x1b[39m No tags",
+			`${chalk.bgRedBright.hex("#123456")("Blue on bright red background")} No tags`,
+		);
+
+		expect(
+			parseTags(
+				"<bg:#123456 fg:bright:red>Bright red on blue background</> No tags",
+			),
+		).toEqual(
+			`${chalk.redBright.bgHex("#123456")("Bright red on blue background")} No tags`,
+		);
+
+		expect(
+			parseTags("<red bg:bright:blue bold>Test</bg> Hi</b> there</red> again"),
+		).toEqual(
+			`${chalk.bold.bgBlueBright.red("Test") + chalk.bold.red(" Hi") + chalk.red(" there")} again`,
+		);
+
+		expect(parseTags("<fg:red italic bg:#0000FF>Test</> Another test")).toEqual(
+			`${chalk.bgHex("#0000FF").italic.red("Test")} Another test`,
 		);
 
 		expect(parseTags("~<bold>Hi~</bold>")).toEqual("<bold>Hi</bold>");
 
 		expect(parseTags("<b>~<i>Bold tag~</i> Still bold</b>")).toEqual(
-			"\x1b[1m<i>\x1b[22m\x1b[1mBold tag</i>\x1b[22m\x1b[1m Still bold\x1b[22m",
+			// The unnecessary calls to chalk.bold is strange.
+			// I'm not sure there is not much I can do about it without making the library needlessly complicated.
+			`${chalk.bold("<i>")}${chalk.bold("Bold tag</i>")}${chalk.bold(" Still bold")}`,
+		);
+
+		expect(parseTags("~<b>Not Bold~</b> Fine ~~<b>Bold~~</b> Normal")).toEqual(
+			`<b>Not Bold</b> Fine ~${chalk.bold("Bold~")} Normal`,
+		);
+
+		expect(parseTags("Fine ~~~<b>Bold~~~</b> Normal")).toEqual(
+			`Fine ~~${chalk.bold("Bold~~")} Normal`,
+		);
+
+		expect(parseTags("Fine ~<b>Nomahl</b> Normal")).toEqual(
+			"Fine <b>Nomahl Normal",
+		);
+
+		expect(parseTags("Fine <b>Bold~</b> Still bold")).toEqual(
+			`Fine ${chalk.bold("Bold</b>")}${chalk.bold(" Still bold")}`,
+		);
+
+		expect(parseTags("Fine ~<b>Bold~~</b> Normal")).toEqual(
+			"Fine <b>Bold~ Normal",
+		);
+
+		expect(parseTags("Fine ~~<b>Bold~</b> Normal")).toEqual(
+			`Fine ~${chalk.bold("Bold</b>")}${chalk.bold(" Normal")}`,
 		);
 	});
 
@@ -48,7 +91,7 @@ describe("tags", () => {
 
 		resumeTagParsing();
 		expect(parseTags("<red>Red tag</red> No tags")).toEqual(
-			"\x1b[31mRed tag\x1b[39m No tags",
+			`${chalk.red("Red tag")} No tags`,
 		);
 	});
 

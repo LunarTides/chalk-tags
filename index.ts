@@ -23,7 +23,7 @@ export function resumeTagParsing() {
 /**
  * Makes chalk tags automatically apply to the console functions.
  *
- * This will make the console.log, console.error, and console.warn functions automatically call `parse` on their arguments.
+ * This will make the console.log, console.error, and console.warn functions automatically call {@link parseTags} on their arguments.
  */
 export function applyTagsToConsole() {
 	const oldConsole = {
@@ -41,8 +41,8 @@ export function applyTagsToConsole() {
  * Parses chalk tags in `text`.
  *
  * @example
- * // You can combined these with each other
- * // Many of these tags may not be supported by all terminal emulators / consoles.
+ * // You can combined these with each other.
+ * // Some of these tags may not be supported by all terminal emulators / consoles.
  * // The following terminals are tested:
  * // Windows Terminal
  * // Windows Command Prompt (doesn't support overline)
@@ -62,14 +62,14 @@ export function applyTagsToConsole() {
  * "bg:bright:red", "bg:bright:green", "bg:bright:blue"
  *
  * // Special
- * "b[old]", "i[talic]", "underline", "overline" // The `old` in bold and `talic` in italic are optional
+ * "b[old]", "i[talic]", "underline", "overline" // Only the "b" in bold and "i" in italic are required
  *
  * // Hex
  * "[fg:]#FF0000", "bg:#FF0000"
  *
- * @param text The text to parse
+ * @param text The text with chalk tags.
  *
- * @returns The resulting string
+ * @returns The resulting string with ansi codes.
  *
  * @example
  * const parsed = parseTags("<b>Bold</b> Normal");
@@ -83,12 +83,12 @@ export function applyTagsToConsole() {
  * @example
  * // You can mix and match tags as much as you want. You can remove categories of tags as well, for example, removing `bg:bright:blue` by doing `</bg>`
  * const parsed = parseTags("<red bg:bright:blue bold>Test</bg> Hi</b> there</red> again");
- * assert.equal(parsed, chalk.red.bgBlueBright.bold("Test") + chalk.red.bold(" Hi") + chalk.red(" there") + " again");
+ * assert.equal(parsed, chalk.bold.bgBlueBright.red("Test") + chalk.bold.red(" Hi") + chalk.red(" there") + " again");
  *
  * @example
  * // Try to not use "</>" if you can help it. In this case, it is fine.
  * const parsed = parseTags("<fg:red italic bg:#0000FF>Test</> Another test");
- * assert.equal(parsed, chalk.red.italic.bgHex("#0000FF")("Test") + " Another test");
+ * assert.equal(parsed, chalk.bgHex("#0000FF").italic.red("Test") + " Another test");
  */
 export function parseTags(text: string): string {
 	if (!actuallyParse || !text.includes("<")) {
@@ -99,23 +99,19 @@ export function parseTags(text: string): string {
 	let currentTags: string[] = [];
 
 	for (const match of text.matchAll(/(.*?)(<.*?>|$)/gs)) {
-		let [_, content = "", tag = ""] = match;
-
-		[content, tag] = handleTildeCase(text, match, content, tag);
+		const [content, tagString] = handleTildeCase(match);
 
 		if (content) {
 			result += applyChalk(content, currentTags);
 		}
 
-		if (tag?.startsWith("<")) {
-			const tags = tag.split(" ");
-
-			for (const individualTag of tags) {
-				if (individualTag.startsWith("</")) {
-					const tagName = individualTag.slice(2, -1); // Remove "</" and ">"
+		if (tagString?.startsWith("<")) {
+			for (const tag of tagString.split(" ")) {
+				if (tag.startsWith("</")) {
+					const tagName = tag.slice(2, -1); // Remove "</" and ">"
 					currentTags = currentTags.filter((t) => !t.startsWith(tagName));
 				} else {
-					currentTags.push(individualTag.replace(/[<>]/g, "")); // Remove < and >
+					currentTags.push(tag.replace("<", "").replace(">", "")); // Remove < and >
 				}
 			}
 		}
@@ -128,8 +124,8 @@ function applyChalk(text: string, tags: string[]): string {
 	return tags.reduce((styledText, _tag) => {
 		let tag = _tag;
 
-		const isBackground = tag.startsWith("bg:");
-		const isBright = tag.startsWith("bright:");
+		const isBackground = tag.includes("bg:");
+		const isBright = tag.includes("bright:");
 
 		// Clean up the tag and handle specific cases
 		tag = tag.replace(/fg:|bg:|bright:|dark:/g, "");
@@ -155,25 +151,37 @@ function applyChalk(text: string, tags: string[]): string {
 	}, text);
 }
 
-function handleTildeCase(
-	text: string,
-	match: RegExpMatchArray,
-	_content: string,
-	_tag: string,
-): [string, string] {
-	let content = _content;
-	let tag = _tag;
+function handleTildeCase(match: RegExpMatchArray): [string, string] {
+	let [_, content, tag] = match;
 
 	if (/(^~~|~~$)/g.test(content)) {
+		/*
+		 * Get rid of one of the escape characters.
+		 * This will make it so "~~<b>" -> "~<b>" instead of "~~<b>" -> "~~<b>",
+		 * and "~~~<b>" -> "~~<b>" instead of "~~~<b>" -> "~~~<b>".
+		 * This makes it in-line with "~<b>" -> "<b>".
+		 */
+		content = content.replace("~", "");
+
 		return [content, tag];
 	}
 
-	// Handle cases where content starts or ends with tilde (~)
-	if (text[match.index ?? -1] === "~") {
-		content = tag; // The content is actually the tag here
+	if (content === "~") {
+		/*
+		 * The content is just the escape character itself.
+		 * This happens at the start of an escape (e.g. "~<b>Some text...")
+		 * Replace it with the tag.
+		 */
+		content = tag;
 		tag = "";
 	} else if (content.endsWith("~") && tag.startsWith("<")) {
-		content = content.replace(/~$/, "") + tag; // Append the tagc to the content if content ends with "~"
+		/*
+		 * The content ends with an escape character.
+		 * This happens at the end of an escape (e.g. "...Some text~</b>")
+		 * Append the tag to the content.
+		 */
+		content = content.replace(/~$/, "") + tag;
+		tag = "";
 	}
 
 	return [content, tag];
